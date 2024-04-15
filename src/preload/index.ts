@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -9,8 +9,13 @@ const api = {}
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    // contextBridge.exposeInMainWorld('electron', electronAPI)
+    contextBridge.exposeInMainWorld('api', {
+      getFiles: () => ipcRenderer.invoke('get-files'),
+      getNestedFiles: (key: string) => ipcRenderer.invoke('get-nested-files', key),
+      readFile: (key: string) => ipcRenderer.invoke('read-file', key),
+      createFile: (name: string) => ipcRenderer.send('create-file', name),
+    })
   } catch (error) {
     console.error(error)
   }

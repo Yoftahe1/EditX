@@ -24,12 +24,15 @@
     "@ant-design/icons": "^5.3.6",
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/utils": "^3.0.0",
+    "@types/fs-extra": "^11.0.4",
     "@uiw/codemirror-theme-androidstudio": "^4.21.25",
     "@uiw/react-codemirror": "^4.21.25",
     "antd": "^5.16.1",
     "codemirror": "^6.0.1",
+    "fs-extra": "^11.2.0",
     "react-split": "^2.0.14",
-    "react-terminal": "^1.4.4"
+    "react-terminal": "^1.4.4",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",

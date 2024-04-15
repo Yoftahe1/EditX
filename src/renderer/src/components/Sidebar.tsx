@@ -1,46 +1,79 @@
 import { Button, Divider, Flex, Typography, Tree } from 'antd'
 import { FileAddOutlined, FolderAddOutlined } from '@ant-design/icons'
-
-import type { GetProps, TreeDataNode } from 'antd'
-import { useState } from 'react'
+import useFileStore from '../store'
+import type { GetProps } from 'antd'
+import { useEffect, useState } from 'react'
+import CustomModal from './CustomModal'
 type DirectoryTreeProps = GetProps<typeof Tree.DirectoryTree>
 
 const { DirectoryTree } = Tree
 
-const treeData: TreeDataNode[] = [
-  {
-    title: 'parent 0',
-    key: '0-0',
-    children: [
-      { title: 'leaf 0-0', key: '0-0-0', isLeaf: true },
-      { title: 'leaf 0-1', key: '0-0-1', isLeaf: true }
-    ]
-  },
-  {
-    title: 'parent 1',
-    key: '0-1',
-    children: [
-      { title: 'leaf 1-0', key: '0-1-0', isLeaf: true },
-      { title: 'leaf 1-1', key: '0-1-1', isLeaf: true }
-    ]
-  }
-]
+interface DataNode {
+  title: string
+  key: string
+  isLeaf?: boolean
+  children?: DataNode[]
+}
 
 const { Text } = Typography
 
+const updateTreeData = (list: DataNode[], key: React.Key, children: DataNode[]): DataNode[] =>
+  list.map((node) => {
+    if (node.key === key) {
+      return {
+        ...node,
+        children
+      }
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: updateTreeData(node.children, key, children)
+      }
+    }
+    return node
+  })
+
 const Sidebar = () => {
-  const [selected, setSelected] = useState('')
+  const selectFile = useFileStore((state) => state.selectFile)
+  const [files, setFiles] = useState<DataNode[]>([])
 
-  const onSelect: DirectoryTreeProps['onSelect'] = (keys) => {
-    setSelected(keys[0].toString())
+  useEffect(() => {
+    getFiles()
+  }, [])
+
+  const onSelect: DirectoryTreeProps['onSelect'] = async (keys, info) => {
+    // setSelected(keys[0].toString())
+    if (info.node.isLeaf) {
+      const value = await window.api.readFile(keys[0].toString())
+      selectFile({ value, title: info.node.title })
+    }
   }
 
-  function createFile() {
-    console.log(selected, 'file')
+  async function getFiles() {
+    const response = await window.api.getFiles()
+    setFiles(response)
   }
+
+  async function getNestedFiles(key: string) {
+    return await window.api.getNestedFiles(key)
+  }
+
+  async function createFile() {
+    await window.api.createFile('hello')
+  }
+
   function createFolder() {
-    console.log(selected, 'folder')
+    // console.log(selected, 'folder')
   }
+
+  const onLoadData = async ({ key, children }: any) => {
+    if (children) return
+    const newFiles = await getNestedFiles(key)
+
+    setFiles((origin) => updateTreeData(origin, key, newFiles))
+  }
+
   return (
     <Flex
       vertical
@@ -49,11 +82,7 @@ const Sidebar = () => {
       <Flex gap={10} align="center" justify="space-between">
         <Text style={{ color: 'white' }}>Selected Folder</Text>
         <Flex>
-          <Button
-            type="text"
-            icon={<FileAddOutlined style={{ color: 'white' }} />}
-            onClick={createFile}
-          />
+          <CustomModal action={createFile} icon={<FileAddOutlined style={{ color: 'white' }} />} />
           <Button
             type="text"
             icon={<FolderAddOutlined style={{ color: 'white' }} />}
@@ -63,9 +92,10 @@ const Sidebar = () => {
       </Flex>
       <Divider style={{ margin: 0, backgroundColor: 'grey' }} />
       <DirectoryTree
-        multiple
+        // onExpand={onExpand}
+        loadData={onLoadData}
         onSelect={onSelect}
-        treeData={treeData}
+        treeData={files}
         style={{ color: 'white', backgroundColor: '#232328' }}
       />
     </Flex>

@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { createFile, getFiles, getNestedFiles,readFile } from './actions'
 
 function createWindow(): void {
   // Create the browser window.
@@ -16,6 +17,11 @@ function createWindow(): void {
       sandbox: false
     }
   })
+
+  ipcMain.handle('get-files', () => getFiles())
+  ipcMain.handle('get-nested-files', (_, key) => getNestedFiles(key))
+  ipcMain.handle('read-file', (_, key) => readFile(key))
+  ipcMain.on('create-file', (_, name) => createFile(name))
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
